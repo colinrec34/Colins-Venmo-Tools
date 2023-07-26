@@ -4,8 +4,14 @@ This is app is designed to be a GUI equipped toolbox for efficient usage of Venm
 ## Inspiration
 Inspired by a need to request 6 roommates for rent, utilities, and internet every month. I wanted to automate this process so I wouldn't need to manually make all 18 identical requests each month.
 
-## 
 Eventually built a GUI on top, so users can be selected from a list and automation/scheduling settings can be adjusted.
+
+Also implemented port to Mac OS .app version.
+
+## Libraries Used:
+- venmo_api: https://pypi.org/project/venmo-api/
+- py2app: https://py2app.readthedocs.io/en/latest/ 
+- tkinter: https://docs.python.org/3/library/tk.html
 
 ## Future Features:
 ### Scheduling
