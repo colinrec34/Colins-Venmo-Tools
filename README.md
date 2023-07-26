@@ -1,4 +1,6 @@
-# This is app is designed to be a GUI equipped toolbox for efficient usage of Venmo functionalities
+# Colin's Venmo Tools
+
+## This is app is designed to be a GUI equipped toolbox for efficient usage of Venmo functionalities
 
 ## Inspired by a need to request 6 roommates for rent, utilities, and internet every month. I wanted to automate this process so I wouldn't need to manually make all 18 identical requests each month.
 
