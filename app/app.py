@@ -12,7 +12,7 @@ class App(tk.Tk):
     def __init__(self):
         #Tkinter Initialization
         tk.Tk.__init__(self)
-        self.title('Colin\'s Venmo Toolssss')
+        self.title('Colin\'s Venmo Tools')
         self.geometry("1200x650")
 
         #Initialize with settings
@@ -35,38 +35,76 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", disable_event)
 
     def build(self):
-        #Left Column Frame (Actions)
+        # Redact toggle (top right corner)
+        self.redact_var = tk.BooleanVar(value=True)
+        redact_check = tk.Checkbutton(
+            self,
+            text="Redact",
+            variable=self.redact_var,
+            command=self.refresh_all,
+            background='blue',  # change this to your preferred color
+            foreground='white', # optional: make text stand out
+            activebackground='blue',
+            activeforeground='white',
+            selectcolor='black'  # checkbox checkmark background
+        )
+        redact_check.grid(row=0, column=2, sticky='ne', padx=8, pady=8)
+
+
+        # Left Column Frame (Actions)
         left_frame = tk.Frame(self, background='green')
         tk.Label(left_frame, text='Actions:', background='green').pack()
         tk.Button(left_frame, text="New Mass Request", command=lambda: self.open_window(newMassRequest.mainWindow)).pack(fill='both')
         tk.Button(left_frame, text='Default Month Request', command=lambda: self.open_window(defaultRequest.mainWindow)).pack(fill='both')
         tk.Button(left_frame, text='Records', command=lambda: self.open_window(records.mainWindow)).pack(fill='both')
         tk.Button(left_frame, text='Logout', command=lambda: self.logout()).pack(fill='both')
-        #tk.Button(button_frame, text="Window Two", command=lambda: self.open_window(WindowTwo)).pack(side="top")
-        
-        #Middle Column Frame (Transactions)
+
+        # Middle Column Frame (Transactions)
         middle_frame = tk.Frame(self, background='purple')
         tk.Label(middle_frame, text='Transactions:', background='purple').pack()
-        #Transactions Listbox
-        transactions_box = tk.Listbox(middle_frame, height=200, width=400, yscrollcommand=True)
-        for transaction in venmo_tools.getTransactions():
-            transactions_box.insert(tk.END, f"${transaction.amount:.2f} between {transaction.actor.username} and {transaction.target.username}: {transaction.note}")
-            # bind click events to the list box elements
-        transactions_box.pack()
-        #Right Frame (Pending)
-        right_frame = tk.Frame(self, background='blue')
-        tk.Label(right_frame, text="Pending:", background='blue').pack()
-        pending_box = tk.Listbox(right_frame, height=200, width=400, yscrollcommand=True)
-        for i in range(10):
-            pending_box.insert(tk.END, f"filler {i}")
-        pending_box.pack()
+        self.transactions_box = tk.Listbox(middle_frame, height=200, width=400)
+        self.transactions_box.pack()
 
-        #Pack the main two column frames
-        left_frame.grid(row=0, column=0, sticky='nw')
-        middle_frame.grid(row=0, column=2, sticky='n')
-        right_frame.grid(row=0, column=1, sticky='ne')
+        # Right Column Frame (Pending)
+        right_frame = tk.Frame(self, background='blue')
+        tk.Label(right_frame, text='Pending:', background='blue').pack()
+        self.pending_box = tk.Listbox(right_frame, height=200, width=400)
+        self.pending_box.pack()
+
+        # Place column frames
+        left_frame.grid(row=1, column=0, sticky='nw')
+        middle_frame.grid(row=1, column=1, sticky='n')
+        right_frame.grid(row=1, column=2, sticky='ne')
         self.columnconfigure(1, weight=2)
         self.columnconfigure(2, weight=2)
+
+        # Initial population
+        self.refresh_all()
+
+
+    def refresh_transactions(self):
+        self.transactions_box.delete(0, tk.END)
+        redact = self.redact_var.get()
+        for entry in venmo_tools.getTransactions(redact=redact):
+            self.transactions_box.insert(tk.END, entry)
+
+    def refresh_all(self):
+        redact = self.redact_var.get()
+
+        # Transactions
+        self.transactions_box.delete(0, tk.END)
+        for entry in venmo_tools.getTransactions(redact=redact):
+            self.transactions_box.insert(tk.END, entry)
+
+        # Pending (for now, mock or replace with actual logic)
+        self.pending_box.delete(0, tk.END)
+        if redact:
+            for _ in range(10):
+                self.pending_box.insert(tk.END, "*****")
+        else:
+            for i in range(10):
+                self.pending_box.insert(tk.END, f"Pending transaction {i}")
+
 
     #Opens a new Window
     def open_window(self, window_class):

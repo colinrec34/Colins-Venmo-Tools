@@ -7,31 +7,52 @@ import tools.csv_tools as csv_tools
 #======================================Login/Logout======================================
 def login(username='', password='', token=''):
     global client
+
+    # Try using the provided token first
     try:
         client = Client(access_token=token)
-    except:
-        print("Invalid Access Token; attempting to get token with OTP...")
-        #tkinter.simpledialog.askstring("Enter OTP", "Enter the OTP sent by Venmo:")
-        try: 
-            token = Client.get_access_token(username=username, password=password)
-            client = Client(access_token=token)
-        except:
-            print('Login Failed')
-            raise ConnectionRefusedError
-    print(f'Login Success! ({client.user.get_my_profile().username})')
-    if json_tools.load_setting("remember"):
-        json_tools.write("remember", True)
-    json_tools.write("token", str(token))
-    return client, token
+        _ = client.user.get_my_profile()  # Trigger a request to validate the token
+        print(f'Login Success! ({client.user.get_my_profile().username})')
+        if json_tools.load_setting("remember"):
+            json_tools.write("remember", True)
+        json_tools.write("token", str(token))
+        return client, token
+    except Exception as e:
+        print("Invalid Access Token or session expired.")
+        print("Attempting login with username and password...")
+
+    # If token login fails, fallback to credential login
+    try:
+        token = Client.get_access_token(username=username, password=password)
+        client = Client(access_token=token)
+        print(f'Login Success with OTP! ({client.user.get_my_profile().username})')
+        json_tools.write("token", str(token))
+        if json_tools.load_setting("remember"):
+            json_tools.write("remember", True)
+        return client, token
+    except Exception as e:
+        print('Login Failed')
+        print(e)
+        raise ConnectionRefusedError("Could not log in to Venmo.")
+
 #-------------------------------------------------------------------------------------------
 def logout() -> None: 
     client.log_out(access_token=json_tools.load_setting('token'))
     print("Successfully Revoked Access Token and Logged Out")
 
 #==================================Retrieval (Get) Commands===================================
-def getTransactions():
+def getTransactions(redact=True):
     my_id = client.user.get_my_profile().id
-    return client.user.get_user_transactions(my_id)
+    transactions = client.user.get_user_transactions(my_id)
+
+    if not redact:
+        return [
+            f"${tx.amount:.2f} between {tx.actor.username} and {tx.target.username}: {tx.note}"
+            for tx in transactions
+        ]
+    else:
+        return ["*****" for _ in transactions]
+
 #-------------------------------------------------------------------------------------------
 def get_username_list():
     with open('./config/users.txt', 'r') as file:
@@ -59,7 +80,7 @@ def monthlyRequest(monthMessage, include, term=False):
         password = input('Password: ')
         login(username=username, password=password)
     usernames = ["QuinnCarlson26", "Fineas-Herrera", "Ben-Kinkor", "Lucas-Johnson-175", "Noah-Lau-3", "jj-timo"]
-    print('Requesting for the month {monthMessage}')
+    print(f'Requesting for the month {monthMessage}')
     requestEqualSplit(2000, monthMessage+ ' Rent', usernames, include)
     requestEqualSplit(100, monthMessage+ ' Utilities', usernames, include)
     requestEqualSplit(65, monthMessage+ ' Internet', usernames, include)
